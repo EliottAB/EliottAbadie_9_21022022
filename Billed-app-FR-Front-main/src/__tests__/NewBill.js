@@ -2,13 +2,19 @@
  * @jest-environment jsdom
  */
 
-import { getByLabelText, screen } from "@testing-library/dom"
+import { getByLabelText, screen, waitFor } from "@testing-library/dom"
 import NewBillUI from "../views/NewBillUI.js"
 import NewBill from "../containers/NewBill.js"
 import { ROUTES_PATH} from "../constants/routes.js";
+import { ROUTES } from "../constants/routes.js";
 import { bills } from "../fixtures/bills.js"
 import router from "../app/Router.js";
 import {fireEvent} from "@testing-library/dom"
+import {filevalid} from "../containers/NewBill.js"
+import pct from "../assets/svg/pct.js";
+import userEvent from "@testing-library/user-event";
+import mockStore from "../__mocks__/store"
+import { localStorageMock } from "../__mocks__/localStorage.js";
 
 
 describe("Given I am connected as an employee", () => {
@@ -33,6 +39,9 @@ describe("Given I am connected as an employee", () => {
       expect(screen.getAllByTestId("expense-type")[0]).toBeTruthy()
     })
     describe("when i give a file", () => {
+      let file
+      let filedata
+      let changefile
       test("Then it should get the file datas", () =>{
         const onNavigate = (pathname) => {
           document.body.innerHTML = ROUTES({ pathname })
@@ -40,17 +49,47 @@ describe("Given I am connected as an employee", () => {
         const newbill = new NewBill({
           document, onNavigate, store: null, localStorage: window.localStorage
         })
-        const file = screen.getAllByTestId("file")[0]
-        const filedata = {
-          file: "image.png",
-        }; 
-
-        function changefile(e) {
-          jest.fn(()=> newbill.handleChangeFile(e))
-          console.log("ok")
+        file = screen.getAllByTestId("file")[0]
+        filedata = {
+          file: "image.png"
+        };
+        changefile = jest.fn((e)=> newbill.handleChangeFile(e))
+        file.addEventListener("change", changefile)
+        fireEvent.change(file, {target: { files: [new File(["image"], filedata.file)], testfilevalid: "image.png"}});
+        expect(changefile).toHaveBeenCalled()
+        expect(filevalid).toBe(true)
+      })
+      describe("When i give a wrong file", () =>{
+        test("validfile should be false", () =>{
+          fireEvent.change(file, {target: { files: [new File(["image"], filedata.file)], testfilevalid: "image.notpng"}});
+          expect(changefile).toHaveBeenCalled()
+          expect(filevalid).toBe(false)
+        })
+      })
+    })
+    describe("when i click on submit button", ()=>{
+      test("Then it should POST the form",  ()=>{
+        const html = NewBillUI()
+        document.body.innerHTML = html
+        const onNavigate = (pathname) => {
+          document.body.innerHTML = ROUTES({ pathname })
         }
-        file.addEventListener("change", changefile(this))
-        fireEvent.change(file, {target: { files: [new File(["image"], filedata.file, {type: "image/png"})]}});
+        const newbill = new NewBill({
+          document, onNavigate, store: mockStore, localStorage: localStorageMock
+        })
+        const form = screen.getAllByTestId("form-new-bill")[0]
+        const billname = screen.getAllByTestId("expense-name")[0]
+        const file = screen.getAllByTestId("file")[0]
+
+        const filedata = {
+          file: "image.png"
+        };
+        fireEvent.change(file, {target: { files: [new File(["image"], filedata.file)], testfilevalid: "image.png"}});
+        const submit = jest.fn((e)=> newbill.handleSubmit(e))
+        form.addEventListener("submit", submit)
+        fireEvent.change(billname, {target: {value: "Test post"}})
+        fireEvent.submit(form)
+        expect(submit).toHaveBeenCalled()
       })
     })
   })

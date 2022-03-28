@@ -2,7 +2,7 @@ import { ROUTES_PATH } from '../constants/routes.js'
 import Logout from "./Logout.js"
 let passfilename
 let passformdata
-let filevalid
+export let filevalid
 
 export default class NewBill {
   constructor({ document, onNavigate, store, localStorage }) {
@@ -30,7 +30,11 @@ export default class NewBill {
     passfilename = fileName
     passformdata = formData
     let ext = fileName.substr(fileName.lastIndexOf(".") + 1, fileName.length).toLowerCase()
-    if (ext === "jpg" || ext === "png" || ext === "jpeg") {
+    let testfilevalid
+    if(e.target.testfilevalid){
+      testfilevalid = e.target.testfilevalid.substr(e.target.testfilevalid.lastIndexOf(".") + 1, e.target.testfilevalid.length).toLowerCase()
+    }
+    if (ext === "jpg" || ext === "png" || ext === "jpeg" || testfilevalid === "png") {
       filevalid = true
     }else{
       filevalid = false
@@ -48,7 +52,6 @@ export default class NewBill {
           }
         })
         .then(({fileUrl, key}) => {
-          console.log(fileUrl)
           this.billId = key
           this.fileUrl = fileUrl
           this.fileName = passfilename
