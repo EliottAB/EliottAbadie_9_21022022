@@ -5,6 +5,7 @@
 import { getByLabelText, screen, waitFor } from "@testing-library/dom"
 import NewBillUI from "../views/NewBillUI.js"
 import NewBill from "../containers/NewBill.js"
+import BillsUI from "../views/BillsUI.js";
 import { ROUTES_PATH} from "../constants/routes.js";
 import { ROUTES } from "../constants/routes.js";
 import { bills } from "../fixtures/bills.js"
@@ -91,6 +92,26 @@ describe("Given I am connected as an employee", () => {
         fireEvent.submit(form)
         expect(submit).toHaveBeenCalled()
       })
+    })
+    test("Post Bill from an api and fail with error 404", ()=>{
+      jest.spyOn(mockStore, "bills");
+      mockStore.bills.mockImplementationOnce(() => 
+          Promise.reject(new Error('Erreur 404'))
+        )
+        const html = BillsUI({ error: 'Erreur 404' })
+        document.body.innerHTML = html
+        const message = screen.getByText(/Erreur 404/)
+        expect(message).toBeTruthy()
+    })
+    test("Post Bill from an api and fail with error 500", ()=>{
+      jest.spyOn(mockStore, "bills");
+      mockStore.bills.mockImplementationOnce(() => 
+          Promise.reject(new Error('Erreur 500'))
+        )
+        const html = BillsUI({ error: 'Erreur 500' })
+        document.body.innerHTML = html
+        const message = screen.getByText(/Erreur 500/)
+        expect(message).toBeTruthy()
     })
   })
 })
